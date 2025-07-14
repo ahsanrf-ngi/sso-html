@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>OIDC Callback</title>
+</head>
+<body>
+  <div id="message">Logging you in...</div>
+
+  <script type="module">
+    let oidcConfig = {
+        authority: 'https://auth.memberstack.com',
+        client_id: 'app_cmcw0y96o00080xs5apn03seg-8fcu0xas',
+        redirect_uri: 'https://244f745d9ea7.ngrok-free.app/callback',
+        post_logout_redirect_uri: 'https://244f745d9ea7.ngrok-free.app/',
+        response_type: 'code',
+        scope: 'openid profile email',
+        token_endpoint: "https://auth.memberstack.com/oauth/token",
+        client_secret: "eb51d36d3592311b1058c7d1d352e344",
+    };
+
+    const messageDiv = document.getElementById('message');
+
+    async function exchangeCode() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+
+      if (!code) {
+        messageDiv.textContent = "No authorization code found.";
+        return;
+      }
+
+      try {
+        const response = await fetch(oidcConfig.token_endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: new URLSearchParams({
+            grant_type: 'authorization_code',
+            code,
+            client_id: oidcConfig.client_id,
+            client_secret: oidcConfig.client_secret,
+            redirect_uri: oidcConfig.redirect_uri
+          })
+        });
+
+        const tokenData = await response.json();
+
+        if (tokenData.error) {
+          throw new Error(tokenData.error_description || 'Token exchange failed');
+        }
+        console.log(tokenData)
+      } catch (err) {
+        console.error('Token exchange error:', err);
+        messageDiv.textContent = 'Login failed.';
+      }
+    }
+
+    exchangeCode();
+  </script>
+</body>
+</html>
